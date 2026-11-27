@@ -1,0 +1,257 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://iobroker.github.io/ioBroker.recipes/schema/recipe.schema.json",
+    "title": "ioBroker recipe",
+    "description": "An automation for ioBroker.javascript: a Blockly script with placeholders and the inputs that fill them.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "version", "title", "description", "author", "minJavascript", "inputs", "blockly"],
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "id": {
+            "description": "Unique ID of the recipe, also the name of its file: recipes/<id>.json",
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "$comment": "must be lower case words and digits joined by \"-\", like \"light-on-motion\""
+        },
+        "version": {
+            "description": "Version of the recipe (SemVer). Raise it with every change, so that users get the update.",
+            "$ref": "#/$defs/semver"
+        },
+        "title": {
+            "$ref": "#/$defs/i18n"
+        },
+        "description": {
+            "$ref": "#/$defs/i18n"
+        },
+        "author": {
+            "description": "GitHub user name of the author",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$",
+            "$comment": "must be a GitHub user name"
+        },
+        "tags": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "pattern": "^[\\p{Ll}\\p{N}]+(-[\\p{Ll}\\p{N}]+)*$",
+                "$comment": "must be lower case words, like \"licht\" or \"window-open\""
+            }
+        },
+        "minJavascript": {
+            "description": "Lowest version of ioBroker.javascript the recipe works with",
+            "$ref": "#/$defs/semver"
+        },
+        "inputs": {
+            "description": "What the user chooses when applying the recipe. The key is the name used in the placeholders.",
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+                "$comment": "must be a name of letters, digits and \"_\" that does not start with a digit"
+            },
+            "additionalProperties": {
+                "$ref": "#/$defs/input"
+            }
+        },
+        "blockly": {
+            "description": "The Blockly XML of the script, with placeholders (see README.md)",
+            "type": "string",
+            "minLength": 1
+        }
+    },
+    "$defs": {
+        "semver": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+            "$comment": "must be a version in SemVer form, like 1.0.0"
+        },
+        "i18n": {
+            "description": "A text in several languages; English and German are required",
+            "type": "object",
+            "required": ["en", "de"],
+            "propertyNames": {
+                "enum": ["en", "de", "ru", "pt", "nl", "fr", "it", "es", "pl", "uk", "zh-cn"]
+            },
+            "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+            }
+        },
+        "input": {
+            "type": "object",
+            "required": ["type"],
+            "discriminator": {
+                "propertyName": "type"
+            },
+            "oneOf": [
+                { "$ref": "#/$defs/deviceInput" },
+                { "$ref": "#/$defs/stateInput" },
+                { "$ref": "#/$defs/numberInput" },
+                { "$ref": "#/$defs/booleanInput" },
+                { "$ref": "#/$defs/stringInput" },
+                { "$ref": "#/$defs/durationInput" },
+                { "$ref": "#/$defs/timeInput" },
+                { "$ref": "#/$defs/selectInput" }
+            ]
+        },
+        "deviceInput": {
+            "description": "A device as the type-detector finds it. {{name}} is its ID, {{name.SET}} the ID of its state SET.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "deviceType"],
+            "properties": {
+                "type": { "const": "device" },
+                "title": { "$ref": "#/$defs/i18n" },
+                "description": { "$ref": "#/$defs/i18n" },
+                "optional": { "type": "boolean" },
+                "deviceType": {
+                    "description": "Type of @iobroker/type-detector, or a list of them",
+                    "oneOf": [
+                        { "type": "string" },
+                        { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } }
+                    ]
+                },
+                "multiple": {
+                    "description": "The user may choose several devices; use them with {{#each name}}",
+                    "type": "boolean"
+                }
+            }
+        },
+        "stateInput": {
+            "description": "A state. {{name}} is its ID.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+                "type": { "const": "state" },
+                "title": { "$ref": "#/$defs/i18n" },
+                "description": { "$ref": "#/$defs/i18n" },
+                "optional": { "type": "boolean" },
+                "role": {
+                    "description": "Role of the state, like value.power. A state whose role continues it (value.power.xyz) fits as well.",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "commonType": {
+                    "description": "common.type of the state",
+                    "enum": ["number", "string", "boolean", "object", "array", "mixed", "json", "file"]
+                },
+                "write": {
+                    "description": "Only states the script may write (common.write)",
+                    "type": "boolean"
+                },
+                "multiple": {
+                    "description": "The user may choose several states; use them with {{#each name}}",
+                    "type": "boolean"
+                }
+            }
+        },
+        "numberInput": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+                "type": { "const": "number" },
+                "title": { "$ref": "#/$defs/i18n" },
+                "description": { "$ref": "#/$defs/i18n" },
+                "optional": { "type": "boolean" },
+                "default": { "type": "number" },
+                "min": { "type": "number" },
+                "max": { "type": "number" },
+                "step": { "type": "number", "exclusiveMinimum": 0 },
+                "unit": { "type": "string", "minLength": 1 }
+            }
+        },
+        "booleanInput": {
+            "description": "{{name}} is TRUE or FALSE, the value of the block logic_boolean",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+                "type": { "const": "boolean" },
+                "title": { "$ref": "#/$defs/i18n" },
+                "description": { "$ref": "#/$defs/i18n" },
+                "optional": { "type": "boolean" },
+                "default": { "type": "boolean" }
+            }
+        },
+        "stringInput": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+                "type": { "const": "string" },
+                "title": { "$ref": "#/$defs/i18n" },
+                "description": { "$ref": "#/$defs/i18n" },
+                "optional": { "type": "boolean" },
+                "default": {
+                    "description": "A text, or a text per language",
+                    "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/i18n" }]
+                }
+            }
+        },
+        "durationInput": {
+            "description": "A duration in seconds",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+                "type": { "const": "duration" },
+                "title": { "$ref": "#/$defs/i18n" },
+                "description": { "$ref": "#/$defs/i18n" },
+                "optional": { "type": "boolean" },
+                "default": { "type": "integer", "minimum": 0 },
+                "min": { "type": "integer", "minimum": 0 },
+                "max": { "type": "integer", "minimum": 0 }
+            }
+        },
+        "timeInput": {
+            "description": "A time of day HH:MM. {{name.hour}} and {{name.minute}} are its parts.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+                "type": { "const": "time" },
+                "title": { "$ref": "#/$defs/i18n" },
+                "description": { "$ref": "#/$defs/i18n" },
+                "optional": { "type": "boolean" },
+                "default": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "$comment": "must be a time HH:MM, like 07:30"
+                }
+            }
+        },
+        "selectInput": {
+            "description": "One of fixed options. {{name}} is the value of the chosen one.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "options"],
+            "properties": {
+                "type": { "const": "select" },
+                "title": { "$ref": "#/$defs/i18n" },
+                "description": { "$ref": "#/$defs/i18n" },
+                "optional": { "type": "boolean" },
+                "default": { "type": "string" },
+                "options": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["value", "title"],
+                        "properties": {
+                            "value": { "type": "string" },
+                            "title": { "$ref": "#/$defs/i18n" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

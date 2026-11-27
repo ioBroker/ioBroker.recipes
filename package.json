@@ -1,0 +1,25 @@
+{
+    "name": "iobroker-recipes",
+    "private": true,
+    "description": "Catalog of automation recipes for ioBroker.javascript",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ioBroker/ioBroker.recipes"
+    },
+    "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
+    "scripts": {
+        "validate": "node scripts/validate.mjs",
+        "build": "node scripts/build.mjs",
+        "embed": "node scripts/embed.mjs",
+        "test": "node --test"
+    },
+    "devDependencies": {
+        "@iobroker/type-detector": "^6.2.0",
+        "ajv": "^8.20.0",
+        "fast-xml-parser": "^5.12.1"
+    }
+}
