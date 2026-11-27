@@ -16,7 +16,9 @@ Keep in mind that the script will run with devices of other users:
 - every ID of a device or state comes from an input, none is written into the script;
 - timers that are started are also stopped or replaced (`clearTimeout` before `setTimeout` with the same name);
 - the script does not depend on a state it creates itself, or on other scripts;
-- texts the user sees (log, messages) come from a `string` input, so they can be translated.
+- texts the user sees (log, messages) come from a `string` input, so they can be translated;
+- the value of a state is read with "Get state value" (`get_value_async`), not with "value of object ID"
+  (`get_value`): that one fails if the javascript instance does not subscribe to all states on start.
 
 ## 2. Turn it into a recipe
 
@@ -74,7 +76,9 @@ Das Skript läuft später mit den Geräten anderer Nutzer:
 - jede ID eines Geräts oder Datenpunkts kommt aus einer Eingabe, keine steht fest im Skript;
 - gestartete Timer werden auch gestoppt oder ersetzt (`clearTimeout` vor `setTimeout` mit demselben Namen);
 - das Skript hängt nicht von Datenpunkten ab, die es selbst anlegt, und nicht von anderen Skripten;
-- Texte für den Nutzer (Log, Nachrichten) kommen aus einer `string`-Eingabe, damit man sie übersetzen kann.
+- Texte für den Nutzer (Log, Nachrichten) kommen aus einer `string`-Eingabe, damit man sie übersetzen kann;
+- der Wert eines Datenpunkts wird mit „Zustandswert nehmen“ (`get_value_async`) gelesen, nicht mit „Wert vom
+  Objekt ID“ (`get_value`): Das scheitert, wenn die javascript-Instanz beim Start nicht alle Datenpunkte abonniert.
 
 ### 2. Daraus ein Rezept machen
 

@@ -244,6 +244,22 @@ describe('the Blockly XML', () => {
         );
     });
 
+    it('rejects reading a state synchronously, but not the name of its object', () => {
+        const read = attr =>
+            recipe(
+                r =>
+                    void (r.blockly = r.blockly.replace(
+                        '</xml>',
+                        `<block type="debug"><value name="TEXT"><block type="get_value"><field name="ATTR">${attr}</field><field name="OID">a.0.b</field></block></value></block></xml>`,
+                    )),
+            );
+        expectError(
+            read('val'),
+            /^blockly, line 12: the block "get_value" reads the state synchronously, which fails if the javascript instance does not subscribe to all states on start: use "get_value_async"$/,
+        );
+        assert.deepEqual(errorsOf(read('common.name')).filter(error => /synchronously/.test(error)), []);
+    });
+
     it('must have the root <xml>', () => {
         expectError(recipe(r => void (r.blockly = r.blockly.replace(/^<xml[^>]*>/, '<root>').replace(/<\/xml>$/, '</root>'))), /^blockly: the root element must be <xml>$/);
     });

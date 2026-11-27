@@ -149,7 +149,9 @@ have it.
 - the placeholders are valid, every placeholder has an input and every input is used;
 - lists only inside `{{#each}}`, optional inputs only inside `{{#if}}`, states of only some device types only inside a condition;
 - the Blockly XML is well formed, and stays so when it is filled in with every device type, with and without the optional inputs, with devices that have all their states or only the needed ones;
-- no blocks with free code: `exec` and the custom JavaScript functions of the procedures.
+- no blocks with free code: `exec` and the custom JavaScript functions of the procedures;
+- no blocks that read a state synchronously (`get_value`, `get_value_var`): they fail if the javascript instance
+  does not subscribe to all states on start. `get_value_async` works in both cases.
 
 Whether a recipe really works can only be seen in an ioBroker; see the review criteria in [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -278,7 +280,9 @@ keine Bedingung.
 Datenpunkte laut type-detector, dass jeder Platzhalter eine Eingabe hat und jede Eingabe verwendet wird, Listen
 nur in `{{#each}}`, optionale Eingaben nur in `{{#if}}`, und dass das Blockly-XML wohlgeformt ist, auch
 ausgefüllt mit jedem Gerätetyp, mit und ohne optionale Eingaben. Bausteine mit freiem Code (`exec`, eigene
-JavaScript-Funktionen) werden abgelehnt.
+JavaScript-Funktionen) werden abgelehnt, ebenso Bausteine, die einen Datenpunkt synchron lesen (`get_value`,
+`get_value_var`): Sie scheitern, wenn die javascript-Instanz beim Start nicht alle Datenpunkte abonniert.
+`get_value_async` funktioniert in beiden Fällen.
 
 ### Katalog
 
