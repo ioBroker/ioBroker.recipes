@@ -1,0 +1,52 @@
+name: Recipes
+
+on:
+    pull_request:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+concurrency:
+    group: recipes-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    # Every pull request and every push: the tests and all recipes must be valid
+    validate:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+            - run: npm ci
+            - run: npm test
+            - run: npm run validate
+
+    # main: build recipes.json and publish it on GitHub Pages
+    publish:
+        if: github.event_name != 'pull_request'
+        needs: validate
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pages: write
+            id-token: write
+        environment:
+            name: github-pages
+            url: ${{ steps.deploy.outputs.page_url }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+            - run: npm ci
+            - run: npm run build
+            - uses: actions/configure-pages@v5
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  path: dist
+            - id: deploy
+              uses: actions/deploy-pages@v4

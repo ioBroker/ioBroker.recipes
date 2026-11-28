@@ -1,0 +1,12 @@
+{
+    "id": "broken-recipe",
+    "version": "1.0",
+    "title": { "en": "Broken on purpose", "de": "Absichtlich kaputt" },
+    "description": { "en": "Used by the tests: scripts/validate.mjs must reject it.", "de": "Für die Tests: scripts/validate.mjs muss es ablehnen." },
+    "author": "someone",
+    "minJavascript": "8.0.0",
+    "inputs": {
+        "light": { "type": "device", "deviceType": "lamp", "title": { "en": "Light", "de": "Lampe" } }
+    },
+    "blockly": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"control\"><field name=\"OID\">{{lights.SET}}</field></block></xml>"
+}
