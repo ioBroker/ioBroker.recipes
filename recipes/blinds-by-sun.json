@@ -1,0 +1,127 @@
+{
+    "$schema": "../schema/recipe.schema.json",
+    "id": "blinds-by-sun",
+    "version": "1.0.0",
+    "title": {
+        "en": "Blinds by the sun",
+        "de": "Rollläden nach Sonne"
+    },
+    "description": {
+        "en": "Opens the blinds in the morning with the sun, but not before a set time, and closes them in the evening when the sun goes down.",
+        "de": "Öffnet die Rollläden morgens mit der Sonne, aber nicht vor einer eingestellten Uhrzeit, und schließt sie abends, wenn die Sonne untergeht."
+    },
+    "author": "GermanBluefox",
+    "tags": [
+        "rollladen",
+        "astro"
+    ],
+    "minJavascript": "8.0.0",
+    "inputs": {
+        "blinds": {
+            "type": "device",
+            "deviceType": "blind",
+            "multiple": true,
+            "title": {
+                "en": "Blinds",
+                "de": "Rollläden"
+            }
+        },
+        "openEvent": {
+            "type": "select",
+            "default": "sunrise",
+            "options": [
+                {
+                    "value": "dawn",
+                    "title": {
+                        "en": "Dawn",
+                        "de": "Morgendämmerung"
+                    }
+                },
+                {
+                    "value": "sunrise",
+                    "title": {
+                        "en": "Sunrise",
+                        "de": "Sonnenaufgang"
+                    }
+                },
+                {
+                    "value": "sunriseEnd",
+                    "title": {
+                        "en": "End of sunrise",
+                        "de": "Ende des Sonnenaufgangs"
+                    }
+                }
+            ],
+            "title": {
+                "en": "Open at",
+                "de": "Öffnen bei"
+            }
+        },
+        "earliest": {
+            "type": "time",
+            "default": "07:00",
+            "title": {
+                "en": "But not before",
+                "de": "Aber nicht vor"
+            }
+        },
+        "openLevel": {
+            "type": "number",
+            "default": 100,
+            "min": 0,
+            "max": 100,
+            "unit": "%",
+            "title": {
+                "en": "Position when open",
+                "de": "Position offen"
+            },
+            "description": {
+                "en": "In ioBroker 100 % is open. If your blinds count the other way, swap the two positions.",
+                "de": "In ioBroker ist 100 % offen. Zählen die Rollläden andersherum, die beiden Positionen tauschen."
+            }
+        },
+        "closeEvent": {
+            "type": "select",
+            "default": "sunset",
+            "options": [
+                {
+                    "value": "sunsetStart",
+                    "title": {
+                        "en": "Start of sunset",
+                        "de": "Beginn des Sonnenuntergangs"
+                    }
+                },
+                {
+                    "value": "sunset",
+                    "title": {
+                        "en": "Sunset",
+                        "de": "Sonnenuntergang"
+                    }
+                },
+                {
+                    "value": "dusk",
+                    "title": {
+                        "en": "Dusk",
+                        "de": "Abenddämmerung"
+                    }
+                }
+            ],
+            "title": {
+                "en": "Close at",
+                "de": "Schließen bei"
+            }
+        },
+        "closeLevel": {
+            "type": "number",
+            "default": 0,
+            "min": 0,
+            "max": 100,
+            "unit": "%",
+            "title": {
+                "en": "Position when closed",
+                "de": "Position geschlossen"
+            }
+        }
+    },
+    "blockly": "<xml xmlns=\"https://developers.google.com/blockly/xml\">\n  <block type=\"astro\" x=\"10\" y=\"10\">\n    <field name=\"TYPE\">{{openEvent}}</field>\n    <field name=\"OFFSET\">0</field>\n    <statement name=\"STATEMENT\">\n      <block type=\"controls_if\">\n        <value name=\"IF0\">\n          <block type=\"time_compare\">\n            <mutation end_time=\"false\"></mutation>\n            <field name=\"OPTION\">&gt;=</field>\n            <field name=\"START_TIME\">{{earliest}}</field>\n          </block>\n        </value>\n        <statement name=\"DO0\">\n{{#each blinds}}\n          <block type=\"control\">\n            <mutation delay_input=\"false\"></mutation>\n            <field name=\"OID\">{{blinds.SET}}</field>\n            <field name=\"WITH_DELAY\">FALSE</field>\n            <value name=\"VALUE\">\n              <block type=\"math_number\">\n                <field name=\"NUM\">{{openLevel}}</field>\n              </block>\n            </value>\n          </block>\n{{/each}}\n        </statement>\n      </block>\n    </statement>\n    <next>\n      <block type=\"schedule\">\n        <field name=\"SCHEDULE\">{{earliest.minute}} {{earliest.hour}} * * *</field>\n        <statement name=\"STATEMENT\">\n          <block type=\"controls_if\">\n            <value name=\"IF0\">\n              <block type=\"time_compare\">\n                <mutation end_time=\"true\"></mutation>\n                <field name=\"OPTION\">between</field>\n                <field name=\"START_TIME\">{{openEvent}}</field>\n                <field name=\"END_TIME\">{{closeEvent}}</field>\n              </block>\n            </value>\n            <statement name=\"DO0\">\n{{#each blinds}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{blinds.SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"math_number\">\n                    <field name=\"NUM\">{{openLevel}}</field>\n                  </block>\n                </value>\n              </block>\n{{/each}}\n            </statement>\n          </block>\n        </statement>\n        <next>\n          <block type=\"astro\">\n            <field name=\"TYPE\">{{closeEvent}}</field>\n            <field name=\"OFFSET\">0</field>\n            <statement name=\"STATEMENT\">\n{{#each blinds}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{blinds.SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"math_number\">\n                    <field name=\"NUM\">{{closeLevel}}</field>\n                  </block>\n                </value>\n              </block>\n{{/each}}\n            </statement>\n          </block>\n        </next>\n      </block>\n    </next>\n  </block>\n</xml>\n"
+}

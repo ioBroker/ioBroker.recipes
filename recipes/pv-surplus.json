@@ -1,0 +1,111 @@
+{
+    "$schema": "../schema/recipe.schema.json",
+    "id": "pv-surplus",
+    "version": "1.0.0",
+    "title": {
+        "en": "Switch on with solar surplus",
+        "de": "Einschalten bei PV-Überschuss"
+    },
+    "description": {
+        "en": "Switches a socket on when the photovoltaic system feeds more than a set power into the grid for a while, and off again when the surplus stays below a lower limit. The script only switches off what it switched on itself, and notices when the socket is switched off by hand.",
+        "de": "Schaltet eine Steckdose ein, wenn die Photovoltaik eine Weile mehr als eine eingestellte Leistung ins Netz einspeist, und wieder aus, wenn der Überschuss unter einer unteren Grenze bleibt. Das Skript schaltet nur aus, was es selbst eingeschaltet hat, und bemerkt, wenn die Steckdose von Hand ausgeschaltet wird."
+    },
+    "author": "GermanBluefox",
+    "tags": [
+        "energie",
+        "photovoltaik"
+    ],
+    "minJavascript": "8.0.0",
+    "inputs": {
+        "power": {
+            "type": "state",
+            "commonType": "number",
+            "title": {
+                "en": "Power fed into the grid",
+                "de": "Einspeisung ins Netz"
+            },
+            "description": {
+                "en": "In W, for example of the electricity meter or the inverter.",
+                "de": "In W, zum Beispiel vom Stromzähler oder vom Wechselrichter."
+            }
+        },
+        "sign": {
+            "type": "select",
+            "default": "positive",
+            "options": [
+                {
+                    "value": "positive",
+                    "title": {
+                        "en": "Feeding in is positive",
+                        "de": "Einspeisung ist positiv"
+                    }
+                },
+                {
+                    "value": "negative",
+                    "title": {
+                        "en": "Feeding in is negative, drawing from the grid positive",
+                        "de": "Einspeisung ist negativ, Bezug aus dem Netz positiv"
+                    }
+                }
+            ],
+            "title": {
+                "en": "Sign of the power",
+                "de": "Vorzeichen der Leistung"
+            }
+        },
+        "socket": {
+            "type": "device",
+            "deviceType": "socket",
+            "title": {
+                "en": "Socket",
+                "de": "Steckdose"
+            }
+        },
+        "onPower": {
+            "type": "number",
+            "default": 1000,
+            "min": 0,
+            "unit": "W",
+            "title": {
+                "en": "Switch on above a surplus of",
+                "de": "Einschalten ab einem Überschuss von"
+            },
+            "description": {
+                "en": "At least the power the device needs.",
+                "de": "Mindestens die Leistung, die das Gerät braucht."
+            }
+        },
+        "onDelay": {
+            "type": "duration",
+            "default": 300,
+            "min": 0,
+            "title": {
+                "en": "Switch on when the surplus lasts for",
+                "de": "Einschalten, wenn der Überschuss anhält seit"
+            }
+        },
+        "offPower": {
+            "type": "number",
+            "default": 0,
+            "unit": "W",
+            "title": {
+                "en": "Switch off below a surplus of",
+                "de": "Ausschalten unter einem Überschuss von"
+            },
+            "description": {
+                "en": "While the device runs, its own power is no longer surplus. 0 W: switch off as soon as power is drawn from the grid.",
+                "de": "Während das Gerät läuft, ist seine eigene Leistung kein Überschuss mehr. 0 W: ausschalten, sobald Strom aus dem Netz bezogen wird."
+            }
+        },
+        "offDelay": {
+            "type": "duration",
+            "default": 300,
+            "min": 0,
+            "title": {
+                "en": "Switch off when it stays below for",
+                "de": "Ausschalten, wenn er darunter bleibt seit"
+            }
+        }
+    },
+    "blockly": "<xml xmlns=\"https://developers.google.com/blockly/xml\">\n  <variables>\n    <variable id=\"surplus\">surplus</variable>\n    <variable id=\"switchedOn\">switchedOn</variable>\n    <variable type=\"timeout\" id=\"onTimer\">onTimer</variable>\n    <variable type=\"timeout\" id=\"offTimer\">offTimer</variable>\n  </variables>\n  <block type=\"on\" x=\"10\" y=\"10\">\n    <field name=\"OID\">{{power}}</field>\n    <field name=\"CONDITION\">ne</field>\n    <field name=\"ACK_CONDITION\"></field>\n    <statement name=\"STATEMENT\">\n      <block type=\"variables_set\">\n        <field name=\"VAR\" id=\"surplus\">surplus</field>\n        <value name=\"VALUE\">\n{{#if sign == \"negative\"}}\n          <block type=\"math_single\">\n            <field name=\"OP\">NEG</field>\n            <value name=\"NUM\">\n              <block type=\"on_source\">\n                <field name=\"ATTR\">state.val</field>\n              </block>\n            </value>\n          </block>\n{{else}}\n          <block type=\"on_source\">\n            <field name=\"ATTR\">state.val</field>\n          </block>\n{{/if}}\n        </value>\n        <next>\n          <block type=\"controls_if\">\n            <mutation elseif=\"1\" else=\"1\"></mutation>\n            <value name=\"IF0\">\n              <block type=\"logic_compare\">\n                <field name=\"OP\">GTE</field>\n                <value name=\"A\">\n                  <block type=\"variables_get\">\n                    <field name=\"VAR\" id=\"surplus\">surplus</field>\n                  </block>\n                </value>\n                <value name=\"B\">\n                  <block type=\"math_number\">\n                    <field name=\"NUM\">{{onPower}}</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n            <statement name=\"DO0\">\n              <block type=\"timeouts_cleartimeout\">\n                <field name=\"NAME\">offTimer</field>\n                <next>\n                  <block type=\"controls_if\">\n                    <value name=\"IF0\">\n                      <block type=\"logic_operation\">\n                        <field name=\"OP\">AND</field>\n                        <value name=\"A\">\n                          <block type=\"logic_negate\">\n                            <value name=\"BOOL\">\n                              <block type=\"variables_get\">\n                                <field name=\"VAR\" id=\"switchedOn\">switchedOn</field>\n                              </block>\n                            </value>\n                          </block>\n                        </value>\n                        <value name=\"B\">\n                          <block type=\"logic_compare\">\n                            <field name=\"OP\">EQ</field>\n                            <value name=\"A\">\n                              <block type=\"timeouts_gettimeout\">\n                                <field name=\"NAME\">onTimer</field>\n                              </block>\n                            </value>\n                            <value name=\"B\">\n                              <block type=\"logic_null\"></block>\n                            </value>\n                          </block>\n                        </value>\n                      </block>\n                    </value>\n                    <statement name=\"DO0\">\n                      <block type=\"timeouts_settimeout\">\n                        <field name=\"NAME\">onTimer</field>\n                        <field name=\"DELAY\">{{onDelay}}</field>\n                        <field name=\"UNIT\">sec</field>\n                        <statement name=\"STATEMENT\">\n                          <block type=\"variables_set\">\n                            <field name=\"VAR\" id=\"switchedOn\">switchedOn</field>\n                            <value name=\"VALUE\">\n                              <block type=\"logic_boolean\">\n                                <field name=\"BOOL\">TRUE</field>\n                              </block>\n                            </value>\n                            <next>\n                              <block type=\"control\">\n                                <mutation delay_input=\"false\"></mutation>\n                                <field name=\"OID\">{{socket.SET}}</field>\n                                <field name=\"WITH_DELAY\">FALSE</field>\n                                <value name=\"VALUE\">\n                                  <block type=\"logic_boolean\">\n                                    <field name=\"BOOL\">TRUE</field>\n                                  </block>\n                                </value>\n                              </block>\n                            </next>\n                          </block>\n                        </statement>\n                      </block>\n                    </statement>\n                  </block>\n                </next>\n              </block>\n            </statement>\n            <value name=\"IF1\">\n              <block type=\"logic_compare\">\n                <field name=\"OP\">LT</field>\n                <value name=\"A\">\n                  <block type=\"variables_get\">\n                    <field name=\"VAR\" id=\"surplus\">surplus</field>\n                  </block>\n                </value>\n                <value name=\"B\">\n                  <block type=\"math_number\">\n                    <field name=\"NUM\">{{offPower}}</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n            <statement name=\"DO1\">\n              <block type=\"timeouts_cleartimeout\">\n                <field name=\"NAME\">onTimer</field>\n                <next>\n                  <block type=\"controls_if\">\n                    <value name=\"IF0\">\n                      <block type=\"logic_operation\">\n                        <field name=\"OP\">AND</field>\n                        <value name=\"A\">\n                          <block type=\"variables_get\">\n                            <field name=\"VAR\" id=\"switchedOn\">switchedOn</field>\n                          </block>\n                        </value>\n                        <value name=\"B\">\n                          <block type=\"logic_compare\">\n                            <field name=\"OP\">EQ</field>\n                            <value name=\"A\">\n                              <block type=\"timeouts_gettimeout\">\n                                <field name=\"NAME\">offTimer</field>\n                              </block>\n                            </value>\n                            <value name=\"B\">\n                              <block type=\"logic_null\"></block>\n                            </value>\n                          </block>\n                        </value>\n                      </block>\n                    </value>\n                    <statement name=\"DO0\">\n                      <block type=\"timeouts_settimeout\">\n                        <field name=\"NAME\">offTimer</field>\n                        <field name=\"DELAY\">{{offDelay}}</field>\n                        <field name=\"UNIT\">sec</field>\n                        <statement name=\"STATEMENT\">\n                          <block type=\"variables_set\">\n                            <field name=\"VAR\" id=\"switchedOn\">switchedOn</field>\n                            <value name=\"VALUE\">\n                              <block type=\"logic_boolean\">\n                                <field name=\"BOOL\">FALSE</field>\n                              </block>\n                            </value>\n                            <next>\n                              <block type=\"control\">\n                                <mutation delay_input=\"false\"></mutation>\n                                <field name=\"OID\">{{socket.SET}}</field>\n                                <field name=\"WITH_DELAY\">FALSE</field>\n                                <value name=\"VALUE\">\n                                  <block type=\"logic_boolean\">\n                                    <field name=\"BOOL\">FALSE</field>\n                                  </block>\n                                </value>\n                              </block>\n                            </next>\n                          </block>\n                        </statement>\n                      </block>\n                    </statement>\n                  </block>\n                </next>\n              </block>\n            </statement>\n            <statement name=\"ELSE\">\n              <block type=\"timeouts_cleartimeout\">\n                <field name=\"NAME\">onTimer</field>\n                <next>\n                  <block type=\"timeouts_cleartimeout\">\n                    <field name=\"NAME\">offTimer</field>\n                  </block>\n                </next>\n              </block>\n            </statement>\n          </block>\n        </next>\n      </block>\n    </statement>\n    <next>\n      <block type=\"on\">\n        <field name=\"OID\">{{socket.SET}}</field>\n        <field name=\"CONDITION\">false</field>\n        <field name=\"ACK_CONDITION\"></field>\n        <statement name=\"STATEMENT\">\n          <block type=\"timeouts_cleartimeout\">\n            <field name=\"NAME\">offTimer</field>\n            <next>\n              <block type=\"variables_set\">\n                <field name=\"VAR\" id=\"switchedOn\">switchedOn</field>\n                <value name=\"VALUE\">\n                  <block type=\"logic_boolean\">\n                    <field name=\"BOOL\">FALSE</field>\n                  </block>\n                </value>\n              </block>\n            </next>\n          </block>\n        </statement>\n      </block>\n    </next>\n  </block>\n</xml>\n"
+}

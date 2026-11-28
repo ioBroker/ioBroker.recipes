@@ -1,0 +1,70 @@
+{
+    "$schema": "../schema/recipe.schema.json",
+    "id": "staircase-light",
+    "version": "1.0.0",
+    "title": {
+        "en": "Staircase light",
+        "de": "Treppenhauslicht"
+    },
+    "description": {
+        "en": "A push button switches the lights on, after a set time they go off again. Pressing it again while they are on starts the time anew.",
+        "de": "Ein Taster schaltet die Lampen ein, nach einer eingestellten Zeit gehen sie wieder aus. Ein erneuter Druck, während sie an sind, startet die Zeit neu."
+    },
+    "author": "GermanBluefox",
+    "tags": [
+        "licht",
+        "taster"
+    ],
+    "minJavascript": "8.0.0",
+    "inputs": {
+        "button": {
+            "type": "device",
+            "deviceType": [
+                "buttonSensor",
+                "button"
+            ],
+            "title": {
+                "en": "Push button",
+                "de": "Taster"
+            }
+        },
+        "light": {
+            "type": "device",
+            "deviceType": [
+                "light",
+                "dimmer",
+                "socket"
+            ],
+            "multiple": true,
+            "title": {
+                "en": "Lights",
+                "de": "Lampen"
+            }
+        },
+        "duration": {
+            "type": "duration",
+            "default": 180,
+            "min": 5,
+            "title": {
+                "en": "Switch off after",
+                "de": "Ausschalten nach"
+            }
+        },
+        "level": {
+            "type": "number",
+            "default": 100,
+            "min": 1,
+            "max": 100,
+            "unit": "%",
+            "title": {
+                "en": "Level for dimmers",
+                "de": "Helligkeit für Dimmer"
+            },
+            "description": {
+                "en": "For dimmers that have no state of their own to switch them on.",
+                "de": "Für Dimmer, die keinen eigenen Datenpunkt zum Einschalten haben."
+            }
+        }
+    },
+    "blockly": "<xml xmlns=\"https://developers.google.com/blockly/xml\">\n  <variables>\n    <variable type=\"timeout\" id=\"offTimer\">offTimer</variable>\n  </variables>\n  <block type=\"on\" x=\"10\" y=\"10\">\n    <field name=\"OID\">{{#if button.type == \"buttonSensor\"}}{{button.PRESS}}{{else}}{{button.SET}}{{/if}}</field>\n    <field name=\"CONDITION\">true</field>\n    <field name=\"ACK_CONDITION\"></field>\n    <statement name=\"STATEMENT\">\n      <block type=\"timeouts_cleartimeout\">\n        <field name=\"NAME\">offTimer</field>\n        <next>\n          <block type=\"timeouts_settimeout\">\n            <field name=\"NAME\">offTimer</field>\n            <field name=\"DELAY\">{{duration}}</field>\n            <field name=\"UNIT\">sec</field>\n            <statement name=\"STATEMENT\">\n{{#each light}}\n{{#if light.ON_SET}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{light.ON_SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"logic_boolean\">\n                    <field name=\"BOOL\">FALSE</field>\n                  </block>\n                </value>\n              </block>\n{{else}}\n{{#if light.type == \"dimmer\"}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{light.SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"math_number\">\n                    <field name=\"NUM\">0</field>\n                  </block>\n                </value>\n              </block>\n{{else}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{light.SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"logic_boolean\">\n                    <field name=\"BOOL\">FALSE</field>\n                  </block>\n                </value>\n              </block>\n{{/if}}\n{{/if}}\n{{/each}}\n            </statement>\n            <next>\n{{#each light}}\n{{#if light.ON_SET}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{light.ON_SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"logic_boolean\">\n                    <field name=\"BOOL\">TRUE</field>\n                  </block>\n                </value>\n              </block>\n{{else}}\n{{#if light.type == \"dimmer\"}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{light.SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"math_number\">\n                    <field name=\"NUM\">{{level}}</field>\n                  </block>\n                </value>\n              </block>\n{{else}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{light.SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"logic_boolean\">\n                    <field name=\"BOOL\">TRUE</field>\n                  </block>\n                </value>\n              </block>\n{{/if}}\n{{/if}}\n{{/each}}\n            </next>\n          </block>\n        </next>\n      </block>\n    </statement>\n  </block>\n</xml>\n"
+}

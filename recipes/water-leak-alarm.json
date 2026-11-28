@@ -1,0 +1,74 @@
+{
+    "$schema": "../schema/recipe.schema.json",
+    "id": "water-leak-alarm",
+    "version": "1.0.0",
+    "title": {
+        "en": "Water leak alarm",
+        "de": "Wassermelder"
+    },
+    "description": {
+        "en": "When a water sensor detects water, the script writes a warning to the log and, if set, to a state that sends it as a message, and switches off the chosen sockets, for example of a washing machine or a pump.",
+        "de": "Erkennt ein Wassermelder Wasser, schreibt das Skript eine Warnung ins Log und, wenn gesetzt, in einen Datenpunkt, der sie als Nachricht versendet, und schaltet die gewählten Steckdosen aus, zum Beispiel von Waschmaschine oder Pumpe."
+    },
+    "author": "GermanBluefox",
+    "tags": [
+        "sicherheit",
+        "benachrichtigung"
+    ],
+    "minJavascript": "8.0.0",
+    "inputs": {
+        "sensors": {
+            "type": "device",
+            "deviceType": "floodAlarm",
+            "multiple": true,
+            "title": {
+                "en": "Water sensors",
+                "de": "Wassermelder"
+            }
+        },
+        "message": {
+            "type": "string",
+            "default": {
+                "en": "Water detected:",
+                "de": "Wasser erkannt:"
+            },
+            "title": {
+                "en": "Message",
+                "de": "Meldung"
+            },
+            "description": {
+                "en": "The name of the sensor follows it.",
+                "de": "Danach folgt der Name des Melders."
+            }
+        },
+        "notifyState": {
+            "type": "state",
+            "commonType": "string",
+            "write": true,
+            "optional": true,
+            "title": {
+                "en": "Also write the message to",
+                "de": "Meldung zusätzlich schreiben in"
+            },
+            "description": {
+                "en": "A state that sends what is written to it, for example telegram.0.communicate.response.",
+                "de": "Ein Datenpunkt, der versendet, was hineingeschrieben wird, zum Beispiel telegram.0.communicate.response."
+            }
+        },
+        "switchOff": {
+            "type": "device",
+            "deviceType": "socket",
+            "multiple": true,
+            "optional": true,
+            "title": {
+                "en": "Switch off on an alarm",
+                "de": "Bei Alarm ausschalten"
+            },
+            "description": {
+                "en": "Sockets of devices that use water, or of a valve that closes without power.",
+                "de": "Steckdosen von Geräten, die Wasser nutzen, oder eines Ventils, das ohne Strom schließt."
+            }
+        }
+    },
+    "blockly": "<xml xmlns=\"https://developers.google.com/blockly/xml\">\n{{#each sensors}}\n  <block type=\"on\" x=\"10\" y=\"10\">\n    <field name=\"OID\">{{sensors.ACTUAL}}</field>\n    <field name=\"CONDITION\">ne</field>\n    <field name=\"ACK_CONDITION\"></field>\n    <statement name=\"STATEMENT\">\n      <block type=\"controls_if\">\n        <value name=\"IF0\">\n          <block type=\"on_source\">\n            <field name=\"ATTR\">state.val</field>\n          </block>\n        </value>\n        <statement name=\"DO0\">\n          <block type=\"debug\">\n            <field name=\"Severity\">warn</field>\n            <value name=\"TEXT\">\n              <block type=\"text\">\n                <field name=\"TEXT\">{{message}} {{sensors.name}}</field>\n              </block>\n            </value>\n{{#if notifyState}}\n            <next>\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{notifyState}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"text\">\n                    <field name=\"TEXT\">{{message}} {{sensors.name}}</field>\n                  </block>\n                </value>\n{{#if switchOff}}\n                <next>\n{{#each switchOff}}\n                  <block type=\"control\">\n                    <mutation delay_input=\"false\"></mutation>\n                    <field name=\"OID\">{{switchOff.SET}}</field>\n                    <field name=\"WITH_DELAY\">FALSE</field>\n                    <value name=\"VALUE\">\n                      <block type=\"logic_boolean\">\n                        <field name=\"BOOL\">FALSE</field>\n                      </block>\n                    </value>\n                  </block>\n{{/each}}\n                </next>\n{{/if}}\n              </block>\n            </next>\n{{else}}\n{{#if switchOff}}\n            <next>\n{{#each switchOff}}\n              <block type=\"control\">\n                <mutation delay_input=\"false\"></mutation>\n                <field name=\"OID\">{{switchOff.SET}}</field>\n                <field name=\"WITH_DELAY\">FALSE</field>\n                <value name=\"VALUE\">\n                  <block type=\"logic_boolean\">\n                    <field name=\"BOOL\">FALSE</field>\n                  </block>\n                </value>\n              </block>\n{{/each}}\n            </next>\n{{/if}}\n{{/if}}\n          </block>\n        </statement>\n      </block>\n    </statement>\n  </block>\n{{/each}}\n</xml>\n"
+}
