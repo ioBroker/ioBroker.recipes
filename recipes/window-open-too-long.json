@@ -1,0 +1,73 @@
+{
+    "$schema": "../schema/recipe.schema.json",
+    "id": "window-open-too-long",
+    "version": "1.0.0",
+    "title": {
+        "en": "Window open for too long",
+        "de": "Fenster zu lange offen"
+    },
+    "description": {
+        "en": "Reports a window or door that stays open longer than a set time: as a warning in the log and, if set, in a state that sends it as a message. A tilted window counts as open. Every window has its own timer, closing it stops the timer.",
+        "de": "Meldet ein Fenster oder eine Tür, die länger als eine eingestellte Zeit offen ist: als Warnung im Log und, wenn gesetzt, in einem Datenpunkt, der sie als Nachricht versendet. Ein gekipptes Fenster zählt als offen. Jedes Fenster hat seinen eigenen Timer, Schließen stoppt ihn."
+    },
+    "author": "GermanBluefox",
+    "tags": [
+        "fenster",
+        "benachrichtigung"
+    ],
+    "minJavascript": "8.0.0",
+    "inputs": {
+        "windows": {
+            "type": "device",
+            "deviceType": [
+                "window",
+                "windowTilt",
+                "door"
+            ],
+            "multiple": true,
+            "title": {
+                "en": "Windows and doors",
+                "de": "Fenster und Türen"
+            }
+        },
+        "delay": {
+            "type": "duration",
+            "default": 900,
+            "min": 60,
+            "title": {
+                "en": "Report when open for",
+                "de": "Melden, wenn offen seit"
+            }
+        },
+        "message": {
+            "type": "string",
+            "default": {
+                "en": "Still open:",
+                "de": "Noch offen:"
+            },
+            "title": {
+                "en": "Message",
+                "de": "Meldung"
+            },
+            "description": {
+                "en": "The name of the window follows it.",
+                "de": "Danach folgt der Name des Fensters."
+            }
+        },
+        "notifyState": {
+            "type": "state",
+            "commonType": "string",
+            "write": true,
+            "optional": true,
+            "title": {
+                "en": "Also write the message to",
+                "de": "Meldung zusätzlich schreiben in"
+            },
+            "description": {
+                "en": "A state that sends what is written to it, for example telegram.0.communicate.response.",
+                "de": "Ein Datenpunkt, der versendet, was hineingeschrieben wird, zum Beispiel telegram.0.communicate.response."
+            }
+        }
+    },
+    "blockly": "<xml xmlns=\"https://developers.google.com/blockly/xml\">\n  <variables>\n{{#each windows}}\n    <variable type=\"timeout\" id=\"openTimer{{@index}}\">openTimer{{@index}}</variable>\n{{/each}}\n  </variables>\n{{#each windows}}\n  <block type=\"on\" x=\"10\" y=\"10\">\n    <field name=\"OID\">{{windows.ACTUAL}}</field>\n    <field name=\"CONDITION\">ne</field>\n    <field name=\"ACK_CONDITION\"></field>\n    <statement name=\"STATEMENT\">\n      <block type=\"timeouts_cleartimeout\">\n        <field name=\"NAME\">openTimer{{@index}}</field>\n        <next>\n          <block type=\"controls_if\">\n            <value name=\"IF0\">\n              <block type=\"on_source\">\n                <field name=\"ATTR\">state.val</field>\n              </block>\n            </value>\n            <statement name=\"DO0\">\n              <block type=\"timeouts_settimeout\">\n                <field name=\"NAME\">openTimer{{@index}}</field>\n                <field name=\"DELAY\">{{delay}}</field>\n                <field name=\"UNIT\">sec</field>\n                <statement name=\"STATEMENT\">\n                  <block type=\"debug\">\n                    <field name=\"Severity\">warn</field>\n                    <value name=\"TEXT\">\n                      <block type=\"text\">\n                        <field name=\"TEXT\">{{message}} {{windows.name}}</field>\n                      </block>\n                    </value>\n{{#if notifyState}}\n                    <next>\n                      <block type=\"control\">\n                        <mutation delay_input=\"false\"></mutation>\n                        <field name=\"OID\">{{notifyState}}</field>\n                        <field name=\"WITH_DELAY\">FALSE</field>\n                        <value name=\"VALUE\">\n                          <block type=\"text\">\n                            <field name=\"TEXT\">{{message}} {{windows.name}}</field>\n                          </block>\n                        </value>\n                      </block>\n                    </next>\n{{/if}}\n                  </block>\n                </statement>\n              </block>\n            </statement>\n          </block>\n        </next>\n      </block>\n    </statement>\n  </block>\n{{/each}}\n</xml>\n"
+}
